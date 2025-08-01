@@ -30,9 +30,9 @@ const NavItems = [
       { title: "Servidores", navigate: "/servidores" },
     ],
   },
-  {
-    className: "searchbar",
-  },
+  // {
+  //   className: "searchbar",
+  // },
 ];
 
 const Header: React.FC = () => {
