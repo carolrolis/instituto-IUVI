@@ -242,9 +242,13 @@ img {
   color: var(--color-cinzaEscuro);
 }
 
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 .no-scrollbar {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE e Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
 .footer-link {

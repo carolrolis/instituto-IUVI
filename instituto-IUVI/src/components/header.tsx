@@ -1,10 +1,9 @@
 import { useState, useRef, useEffect, FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import menu from "../assets/images/icons/menu.svg";
 import menuCross from "../assets/images/icons/cross.svg";
 import logo from "../assets/images/logo.svg";
 
-// Definição dos itens de navegação
 const NavItems = [
   {
     title: "/Cursos",
@@ -31,12 +30,11 @@ const NavItems = [
     ],
   },
   // {
-  //   className: "searchbar",
+  //   className: "searchbar",
   // },
 ];
 
 const Header: React.FC = () => {
-  // Hooks de estado e referência
   const [openMenu, setOpenMenu] = useState(false);
   const [openSobre, setOpenSobre] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -44,13 +42,12 @@ const Header: React.FC = () => {
   const menuRef = useRef<HTMLUListElement>(null);
   const menuButtonRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Função para alternar o menu mobile
   const handleClick = () => {
     setOpenMenu((prevOpenMenu) => !prevOpenMenu);
   };
 
-  // Efeito para detectar o tamanho da tela (mobile/desktop)
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 1024);
@@ -60,7 +57,6 @@ const Header: React.FC = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Efeito para fechar o menu ao clicar fora dele
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -79,19 +75,18 @@ const Header: React.FC = () => {
     };
   }, [openMenu]);
 
-  // Função para lidar com o envio da pesquisa
   const handleSearchSubmit = (e: FormEvent) => {
     e.preventDefault(); // Impede o recarregamento da página
     if (searchQuery.trim()) {
       // Navega para a página de resultados de pesquisa com a consulta como parâmetro
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery(""); // Limpa o campo de pesquisa após o envio
-      if(isMobile) setOpenMenu(false); // Fecha o menu mobile após a pesquisa
+      if (isMobile) setOpenMenu(false); // Fecha o menu mobile após a pesquisa
     }
   };
 
   return (
-    <header className="w-screen max-h-fit z-50 fixed top-0 left-0 bg-pretoTransparente hover:bg-cinzaHeader transform duration-300">
+    <header className="w-screen max-h-fit z-1000 fixed top-0 left-0 bg-pretoTransparente hover:bg-cinzaHeader transform duration-300">
       <nav className="w-full flex items-center justify-between">
         <Link to="/">
           <div id="logo" className="cursor-pointer 2xl:min-w-80">
@@ -121,7 +116,6 @@ const Header: React.FC = () => {
           }`}
         >
           {NavItems.map((Item) => {
-            // Renderiza a barra de pesquisa
             if (Item.className.includes("searchbar")) {
               return (
                 <li key="searchbar" className={Item.className}>
@@ -139,8 +133,11 @@ const Header: React.FC = () => {
               );
             }
 
-            // Renderiza o item de menu com submenu (dropdown)
             if (Item.children) {
+              const isSobreMenuActive = Item.children.some(
+                (child) => child.navigate === location.pathname
+              );
+
               return (
                 <li
                   key={Item.title}
@@ -149,7 +146,11 @@ const Header: React.FC = () => {
                   onMouseLeave={() => !isMobile && setOpenSobre(false)}
                   onClick={() => isMobile && setOpenSobre((prev) => !prev)}
                 >
-                  <span className="cursor-pointer flex items-center">
+                  <span
+                    className={`cursor-pointer flex items-center ${
+                      isSobreMenuActive ? "text-roxoClaro font-bold" : ""
+                    }`}
+                  >
                     {Item.title}
                     <svg
                       className="w-5 h-5 ml-2 inline-block"
@@ -165,7 +166,14 @@ const Header: React.FC = () => {
                     <ul className="absolute bg-cinzaHeader rounded-lg p-6 space-y-2 z-50">
                       {Item.children.map((child) => (
                         <li key={child.title}>
-                          <Link to={child.navigate}>{child.title}</Link>
+                          <NavLink
+                            to={child.navigate}
+                            className={({ isActive }) =>
+                              isActive ? "text-roxoClaro font-bold" : ""
+                            }
+                          >
+                            {child.title}
+                          </NavLink>
                         </li>
                       ))}
                     </ul>
@@ -174,10 +182,16 @@ const Header: React.FC = () => {
               );
             }
 
-            // Renderiza um item de menu simples
             return (
               <li key={Item.title} className={Item.className}>
-                <Link to={Item.navigate!}>{Item.title}</Link>
+                <NavLink
+                  to={Item.navigate!}
+                  className={({ isActive }) =>
+                    isActive ? "text-roxoClaro font-bold" : ""
+                  }
+                >
+                  {Item.title}
+                </NavLink>
               </li>
             );
           })}

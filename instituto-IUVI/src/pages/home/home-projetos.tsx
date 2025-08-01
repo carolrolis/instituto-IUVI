@@ -66,7 +66,7 @@ const HomeProjetos = () => {
                       key={imagem.id}
                       src={imagem.src}
                       alt={imagem.alt}
-                      className="no-select rounded-3xl"
+                      className="no-select rounded-3xl w-full h-full object-cover"
                       loading="lazy"
                     />
                   ))}

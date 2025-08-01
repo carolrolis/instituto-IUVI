@@ -99,11 +99,11 @@ const FormularioProjeto: React.FC<FormularioProjetoProps> = ({
   return (
     <div
       id="formulario-projeto"
-      className="fixed inset-0 bg-pretoTransparente flex items-center justify-center z-99"
+      className="fixed inset-0 bg-pretoTransparente flex items-center justify-center z-2000"
       onClick={onClose}
     >
       <div
-        className="bg-roxoEscuro rounded-2xl shadow-xl max-w-9/10 lg:max-w-80/100 m-auto px-5 md:px-15 py-5 md:py-15 max-h-[90vh] overflow-y-auto text-white"
+        className="bg-roxoEscuro rounded-2xl shadow-xl max-w-9/10 lg:max-w-80/100 m-auto px-5 md:px-15 py-5 md:py-15 max-h-[90vh] overflow-y-auto text-white no-scrollbar"
         onClick={(e) => e.stopPropagation()}
       >
         <form className="relative" onSubmit={handleSubmit}>
@@ -185,7 +185,7 @@ const FormularioProjeto: React.FC<FormularioProjetoProps> = ({
             </div>
           </div>
           
-          <div id="fechar-formulario-projeto" className="w-fit absolute -top-2 md:-top-10 -right-2 md:-right-10">
+          <div id="fechar-formulario-projeto" className="w-fit absolute -top-3 md:-top-10 -right-3 md:-right-10">
             <button type="button" onClick={onClose} className=""><img src={closeIcon} alt="Fechar" className="w-8 md:w-15" /></button>
           </div>
         </form>

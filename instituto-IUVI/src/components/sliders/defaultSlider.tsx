@@ -7,7 +7,8 @@ interface DefaultSliderProps {
   allowDrag?: boolean;
   showArrows?: boolean;
   oneAtATime?: boolean;
-  // ADICIONADO: Nova prop para receber as classes de estilização do slide
+  // Ambas as props de largura agora coexistem
+  slidesPerView?: number; 
   slideClassName?: string;
 }
 
@@ -16,7 +17,8 @@ const DefaultSlider: React.FC<DefaultSliderProps> = ({
   allowDrag = true,
   showArrows = true,
   oneAtATime = false,
-  slideClassName, // <-- Nova prop
+  slidesPerView, // Prop antiga mantida
+  slideClassName, // Prop nova
 }) => {
   const childArray = React.Children.toArray(children);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -30,7 +32,7 @@ const DefaultSlider: React.FC<DefaultSliderProps> = ({
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(false);
 
-  // Lógica para mostrar ou esconder as setas de navegação (com tolerância)
+  // ... (Toda a lógica de setas e de drag and drop permanece exatamente a mesma) ...
   const updateArrowVisibility = useCallback(() => {
     if (!containerRef.current) return;
     const { scrollLeft, scrollWidth, clientWidth } = containerRef.current;
@@ -39,13 +41,10 @@ const DefaultSlider: React.FC<DefaultSliderProps> = ({
     setShowRightArrow(scrollLeft + clientWidth < scrollWidth - tolerance);
   }, []);
 
-  // Adiciona listeners de scroll e redimensionamento no container
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-    container.addEventListener("scroll", updateArrowVisibility, {
-      passive: true,
-    });
+    container.addEventListener("scroll", updateArrowVisibility, { passive: true });
     const observer = new ResizeObserver(updateArrowVisibility);
     observer.observe(container);
     updateArrowVisibility();
@@ -55,57 +54,42 @@ const DefaultSlider: React.FC<DefaultSliderProps> = ({
     };
   }, [childArray, updateArrowVisibility]);
 
-  // Função para o clique dos botões de seta
   const handleArrowScroll = (direction: "next" | "prev") => {
     if (!containerRef.current) return;
     const scrollAmount = oneAtATime
       ? containerRef.current.clientWidth
       : containerRef.current.clientWidth * 0.8;
-
     containerRef.current.scrollBy({
       left: direction === "next" ? scrollAmount : -scrollAmount,
       behavior: "smooth",
     });
   };
 
-  // Funções para a lógica de arrastar (drag)
   const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
     if (!allowDrag || !containerRef.current) return;
     e.preventDefault();
-    dragRef.current = {
-      isDragging: true,
-      dragged: false,
-      startX: e.pageX,
-      startScrollLeft: containerRef.current.scrollLeft,
-    };
+    dragRef.current = { isDragging: true, dragged: false, startX: e.pageX, startScrollLeft: containerRef.current.scrollLeft };
     containerRef.current.style.cursor = "grabbing";
     containerRef.current.style.scrollSnapType = "none";
   };
 
-  const handleMouseMove = useCallback(
-    (e: globalThis.MouseEvent) => {
-      const { isDragging, startX, startScrollLeft } = dragRef.current;
-      if (!isDragging || !containerRef.current || !allowDrag) return;
-
-      e.preventDefault();
-      const dx = e.pageX - startX;
-      if (Math.abs(dx) > 5) dragRef.current.dragged = true;
-      containerRef.current.scrollLeft = startScrollLeft - dx;
-    },
-    [allowDrag]
-  );
+  const handleMouseMove = useCallback((e: globalThis.MouseEvent) => {
+    const { isDragging, startX, startScrollLeft } = dragRef.current;
+    if (!isDragging || !containerRef.current || !allowDrag) return;
+    e.preventDefault();
+    const dx = e.pageX - startX;
+    if (Math.abs(dx) > 5) dragRef.current.dragged = true;
+    containerRef.current.scrollLeft = startScrollLeft - dx;
+  }, [allowDrag]);
 
   const handleMouseUp = useCallback(() => {
     if (!allowDrag || !containerRef.current) return;
     dragRef.current.isDragging = false;
     containerRef.current.style.cursor = "grab";
     containerRef.current.style.scrollSnapType = "x mandatory";
-    setTimeout(() => {
-      dragRef.current.dragged = false;
-    }, 100);
+    setTimeout(() => { dragRef.current.dragged = false; }, 100);
   }, [allowDrag]);
 
-  // Adiciona listeners globais para o drag
   useEffect(() => {
     const handleMove = (e: globalThis.MouseEvent) => {
       if (dragRef.current.isDragging) handleMouseMove(e);
@@ -113,12 +97,10 @@ const DefaultSlider: React.FC<DefaultSliderProps> = ({
     const handleUp = () => {
       if (dragRef.current.isDragging) handleMouseUp();
     };
-
     if (allowDrag) {
       document.addEventListener("mousemove", handleMove);
       document.addEventListener("mouseup", handleUp);
     }
-
     return () => {
       if (allowDrag) {
         document.removeEventListener("mousemove", handleMove);
@@ -126,33 +108,48 @@ const DefaultSlider: React.FC<DefaultSliderProps> = ({
       }
     };
   }, [allowDrag, handleMouseMove, handleMouseUp]);
+  // ... (Fim da lógica de setas e drag) ...
+
 
   return (
     <div className="relative w-full">
       <div
         ref={containerRef}
-        // ALTERADO: A classe 'gap' agora é fixa e consistente, pois o espaçamento é controlado pelo padding dentro do slide se necessário.
-        className="flex gap-4 overflow-x-auto no-scrollbar snap-x snap-mandatory select-none"
+        // ALTERADO: Lógica de 'gap' ajustada para funcionar bem em todos os cenários
+        className={`flex overflow-x-auto no-scrollbar snap-x snap-mandatory select-none ${
+          oneAtATime || slidesPerView ? "gap-0 md:gap-4" : "gap-5"
+        }`}
         style={{ cursor: allowDrag ? "grab" : "default" }}
         onMouseDown={handleMouseDown}
       >
         {React.Children.map(childArray, (child, index) => {
-          // LÓGICA DE LARGURA TOTALMENTE REFEITA
+          // =================================================================
+          // LÓGICA DE ESTILO HÍBRIDA PARA GARANTIR RETROCOMPATIBILIDADE
+          // =================================================================
           const slideStyle: React.CSSProperties = { flexShrink: 0 };
-          
-          // Se 'oneAtATime' for verdadeiro, ele tem prioridade e ocupa a tela toda.
-          // Caso contrário, usa as classes que você passou via 'slideClassName'.
-          // Se nenhuma classe for passada, ele usa um padrão de fallback.
-          const finalClassName = oneAtATime
-            ? "w-full"
-            : slideClassName || "w-4/5 sm:w-1/2 md:w-1/3"; // Um padrão razoável
+          let slideWidthClass = "";
+
+          if (oneAtATime) {
+            // 1. Prioridade máxima: oneAtATime
+            slideWidthClass = "w-full";
+          } else if (slideClassName) {
+            // 2. Prioridade: A nova prop 'slideClassName' para sliders responsivos
+            slideWidthClass = slideClassName;
+          } else if (slidesPerView) {
+            // 3. Prioridade: A prop antiga 'slidesPerView'
+            slideStyle.width = `calc(100% / ${slidesPerView})`;
+            // Adiciona um padding para compensar o gap removido e criar espaçamento
+            slideWidthClass = "pr-4"; 
+          } else {
+            // 4. Fallback: O comportamento original para sliders antigos
+            slideWidthClass = "w-70 lg:w-80 xl:w-90";
+          }
 
           return (
             <div
               key={index}
               style={slideStyle}
-              // ALTERADO: Aplica as classes dinâmicas e responsivas
-              className={`snap-center ${finalClassName}`}
+              className={`snap-center ${slideWidthClass}`}
               onClickCapture={(e) => {
                 if (dragRef.current.dragged) {
                   e.stopPropagation();
@@ -166,6 +163,7 @@ const DefaultSlider: React.FC<DefaultSliderProps> = ({
         })}
       </div>
 
+      {/* ... (Botões de seta permanecem iguais) ... */}
       {showArrows && showLeftArrow && (
         <button
           title="Anterior"
@@ -175,7 +173,6 @@ const DefaultSlider: React.FC<DefaultSliderProps> = ({
           <Arrow direction="left" className="w-8 h-8 md:w-15 md:h-15" />
         </button>
       )}
-
       {showArrows && showRightArrow && (
         <button
           title="Próximo"

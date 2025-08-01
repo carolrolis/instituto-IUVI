@@ -18,7 +18,6 @@ interface Noticia {
 }
 
 // --- Componentes Filhos ---
-
 const DestaqueSlide: React.FC<{ noticia: Noticia }> = ({ noticia }) => {
   const formatDate = (dateString: string) => {
     if (!dateString) return { dia: "", mes: "", ano: "" };
@@ -32,9 +31,8 @@ const DestaqueSlide: React.FC<{ noticia: Noticia }> = ({ noticia }) => {
   const { dia, mes, ano } = formatDate(noticia.dataCriacao);
 
   return (
-    // O container principal continua sendo uma coluna flex que ocupa toda a altura
     <div className="w-full max-w-7xl mx-auto px-5 md:px-8 flex flex-col h-full">
-      {/* Container do Texto (sem alterações significativas) */}
+      {/* Container do Texto */}
       <div className="my-10 flex flex-col lg:flex-row items-start gap-x-12 gap-y-8">
         <div className="flex-shrink-0 text-3xl text-cinza">
           <span className="font-semibold text-4xl text-white">Data</span>
@@ -60,15 +58,9 @@ const DestaqueSlide: React.FC<{ noticia: Noticia }> = ({ noticia }) => {
         </div>
       </div>
 
-      {/* === A MÁGICA ACONTECE AQUI === */}
-
-      {/* 1. NOVO: Div Espaçador. Ele é flexível (flex-1) e vai ocupar todo o espaço vago. */}
       <div className="flex-1"></div>
 
-      {/* 2. Container da Imagem: Agora não precisa mais do flex-1. */}
-      {/* Ele é simplesmente empurrado para o fundo pelo espaçador. */}
       <div className="relative w-full max-h-[45vh] full-bleed">
-        {/* 3. Imagem preenche 100% de seu container, sem precisar de mt-auto. */}
         <img
           src={getImageUrl(noticia.imagemUrl)}
           alt={`Imagem da notícia: ${noticia.titulo}`}
@@ -87,28 +79,45 @@ const NoticiaCard: React.FC<{ noticia: Noticia }> = ({ noticia }) => {
     });
 
   return (
-    <a
-      href={noticia.link}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="block rounded-2xl overflow-hidden group h-full flex flex-col"
-    >
-      <div className="relative w-full h-48">
-        <img
-          src={getImageUrl(noticia.imagemUrl)}
-          alt={noticia.titulo}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-      </div>
-      <div className="p-4 flex flex-col flex-grow">
-        <h3 className="font-bold text-lg leading-tight group-hover:text-purple-400 transition-colors flex-grow">
+    <div className="relative w-full h-80 rounded-2xl overflow-hidden group cursor-pointer">
+      {/* Imagem de fundo */}
+      <img
+        src={getImageUrl(noticia.imagemUrl)}
+        alt={noticia.titulo}
+        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+      />
+
+      {/* Overlay escuro para melhor legibilidade */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/20" />
+
+      {/* Conteúdo do card */}
+      <div className="absolute inset-0 p-6 flex flex-col justify-end text-white">
+        {/* Título */}
+        <h3 className="font-bold text-xl leading-tight mb-3 group-hover:text-purple-300 transition-colors duration-300">
           {noticia.titulo}
         </h3>
-        <span className="text-sm text-cinza mt-2">
+
+        {/* Descrição */}
+        <p className="text-sm text-gray-200 mb-4 line-clamp-3 leading-relaxed">
+          {noticia.descricao}
+        </p>
+
+        {/* Data */}
+        <div className="text-xs text-gray-300 mb-4">
           {formatDate(noticia.dataCriacao)}
-        </span>
+        </div>
+
+        {/* Botão Saiba Mais */}
+        <a
+          href={noticia.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center text-sm font-semibold text-purple-300 hover:text-purple-200 transition-colors duration-300"
+        >
+          Saiba Mais →
+        </a>
       </div>
-    </a>
+    </div>
   );
 };
 
@@ -125,7 +134,7 @@ const Noticias = () => {
 
   // --- Estados do Carrossel de Destaques ---
   const [currentIndex, setCurrentIndex] = useState(0);
-  const AUTOPLAY_DELAY = 4000; // Tempo reduzido para 4 segundos
+  const AUTOPLAY_DELAY = 4000; // 4 segundos
 
   // --- Derivação de Dados ---
   const destaques = noticias.slice(0, 4);
@@ -167,7 +176,7 @@ const Noticias = () => {
       }
     };
     fetchNoticiasData();
-  }, [sortOrder]); // Depend on sortOrder to re-fetch/re-sort
+  }, [sortOrder]);
 
   // --- Efeito para o Autoplay do Carrossel (sem pausa) ---
   useEffect(() => {
@@ -348,10 +357,12 @@ const Noticias = () => {
           </p>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {currentNoticias.map((noticia) => (
-            <NoticiaCard key={noticia._id} noticia={noticia} />
-          ))}
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {currentNoticias.map((noticia) => (
+              <NoticiaCard key={noticia._id} noticia={noticia} />
+            ))}
+          </div>
         </div>
       </section>
 
